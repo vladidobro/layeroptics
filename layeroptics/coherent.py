@@ -3,22 +3,6 @@
 import numpy as np
 
 
-def propagation_matrix():
-    pass
-
-
-def delta_matrix():
-    pass
-
-
-def dynamic_matrix():
-    pass
-
-
-def dynamic_matrix_isotropic():
-    pass
-
-
 class Layer:
     '''Any coherent layer with a definite propagation matrix
     Matrices must be callables matrix(omega, k_trans)'''

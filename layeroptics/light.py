@@ -2,16 +2,6 @@
 
 import numpy as np
 
-PAULI_MATRICES = np.array([np.eye(2),
-                           [[1, 0], [0, -1]],
-                           [[0, 1], [1, 0]],
-                           [[0, -1j], [1j, 0]]])
-
-
-def rotation_matrix_2d(angle):
-    return np.array([0])
-
-
 class JonesVector:
     def __init__(self, j_vec):
         self.j_vec = np.array(j_vec)
