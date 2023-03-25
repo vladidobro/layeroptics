@@ -1,7 +1,7 @@
 # layeroptics
 
 Classical light propagation in 2D-translationally invariant structures described by permittivity tensors.
-Calculations are based on the Berreman approach to 1D Maxwell equations.
+Calculations are based on the Berreman approach to Maxwell equations.
 
 - Reflection and transmission Jones matrices of general layered structures
 - Gradients of Jones matrices with respect to permittivity tensor elements
