@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+from .common import *
 
 
 class Layer:
@@ -10,22 +11,26 @@ class Layer:
                  dynamic_matrix_l=None,
                  dynamic_matrix_r=None):
         self.propagation_matrix = propagation_matrix
-        self.dynamic_matrix_l = dynamic_matrix_l \
-            if dynamic_matrix_l is not None else \
-            np.eye(4)
-        self.dynamic_matrix_r = dynamic_matrix_r \
-            if dynamic_matrix_r is not None else \
-            np.eye(4)
+        self.dynamic_matrix_l = dynamic_matrix_l
+        self.dynamic_matrix_r = dynamic_matrix_r
+        if dynamic_matrix_l is None:
+            self.dynamic_matrix_l = lambda omega, k_trans: \
+                dynamic_matrix_from_propagation(
+                        self.propagation_matrix(omega, k_trans),
+                        omega,
+                        k_trans)
+        if dynamic_matrix_r is None:
+            self.dynamic_matrix_r = lambda omega, k_trans: \
+                dynamic_matrix_from_propagation(
+                        self.propagation_matrix(omega, k_trans),
+                        omega,
+                        k_trans)
 
     def jones_matrices(self, omega, k_trans):
-        M = np.inv(self.dynamic_matrix_l(omega, k_trans)) @ \
-            self.propagation_matrix(omega, k_trans) @ \
-            self.dynamic_matrix_r(omega, k_trans)
-        T_l = np.inv(M[2:4, 2:4])
-        R_l = M[:2, 2:4] @ T_l
-        R_r = -np.inv(M[2:4, 2:4]) @ M[2:4, :2]
-        T_r = M[:2, :2] + M[:2, 2:4] @ R_r
-        return T_l, R_l, T_r, R_r
+        return jones_matrices_from_modal(modal_matrix(
+            self.propagation_matrix(omega, k_trans),
+            self.dynamic_matrix_l(omega, k_trans),
+            self.dynamic_matrix_r(omega, k_trans)))
 
     def rotate_2d(self, angle, inplace=False):
         pass
@@ -44,13 +49,16 @@ class MultiLayer(Layer):
     def dynamic_matrix_r(self, omega, k_trans):
         return self.layers[-1].dynamic_matrix_r(omega, k_trans)
 
+    def rotate_2d(self, angle, inplace=False):
+        pass
+
 
 class RepeatedLayer(Layer):
     def __init__(self, layer, number):
         self.layer = layer
         self.number = number
 
-    def propagation_matrix(self):
+    def propagation_matrix(self, omega, k_trans):
         pass
 
     def dynamic_matrix_l(self, omega, k_trans):
@@ -59,28 +67,33 @@ class RepeatedLayer(Layer):
     def dynamic_matrix_r(self, omega, k_trans):
         return self.layer.dynamic_matrix_r(omega, k_trans)
 
+    def rotate_2d(self, angle, inplace=False):
+        pass
+
 
 class BerremanLayer(Layer):
     '''Layer with a Berreman delta matrix
-    delta must be callable delta(omega)'''
+    delta must be callable delta(omega, k_trans)'''
     def __init__(self, delta_matrix, thickness):
         self.delta_matrix = delta_matrix
         self.thickness = thickness
 
     def propagation_matrix(self, omega, k_trans):
-        return np.expm(1j *
-                       omega *
-                       self.thickness *
-                       self.delta_matrix(omega))
+        return propagation_matrix(self.delta_matrix(omega, k_trans),
+                                  omega, self.thickness)
 
     def dynamic_matrix(self, omega, k_trans):
-        pass
+        return dynamic_matrix_from_delta(self.delta_matrix(omega, k_trans),
+                                         omega, k_trans)
 
     def dynamic_matrix_l(self, omega, k_trans):
-        return self.dynamic_matrix_l
+        return self.dynamic_matrix(omega, k_trans)
 
     def dynamic_matrix_r(self, omega, k_trans):
-        return self.dynamic_matrix_r
+        return self.dynamic_matrix(omega, k_trans)
+
+    def rotate_2d(self, angle, inplace=False):
+        pass
 
 
 class PermittivityLayer(BerremanLayer):
@@ -91,17 +104,14 @@ class PermittivityLayer(BerremanLayer):
         self.thickness = thickness
 
     def delta_matrix(self, omega, k_trans):
-        ro = np.array([[0, 1], [-1, 0]])
-        p_proj = np.outer(k_trans, k_trans)
-        s_proj = - ro @ p_proj @ ro
-        eo = self.permittivity_tensor[:2, :2]
-        ev = self.permittivity_tensor[:2, 2:3]
-        eh = self.permittivity_tensor[2:3, :2]
-        ez = self.permittivity_tensor[2, 2]
-        return np.block([[-np.outer(k_trans, eh)/ez,
-                          np.eye(2) - p_proj/ez],
-                         [eo - np.outer(ev, eh)/ez - s_proj,
-                          - np.outer(ev, k_trans)/ez]])
+        return delta_matrix(self.permittivity,
+                            omega, k_trans)
+
+    def rotate_2d(self, angle, inplace=False):
+        pass
+
+    def rotate_3d(self, rotation_matrix, inplace=False):
+        pass
 
 
 class IsotropicLayer(PermittivityLayer):
@@ -115,16 +125,13 @@ class IsotropicLayer(PermittivityLayer):
         return self.index(omega)**2 * np.eye(3)
 
     def dynamic_matrix(self, omega, k_trans):
-        N = k_trans
-        n = self.index
-        ssqr = np.dot(N, N)
-        c = np.sqrt(1-ssqr/n**2)
-        p_proj = np.array([[1, 0], [0, 0]]) \
-            if not ssqr else np.outer(N, N) / ssqr
-        s_proj = np.eye(2) - p_proj
-        return np.block([[c*p_proj + s_proj, c*p_proj + s_proj],
-                        [n*(p_proj + c*s_proj), -n*(p_proj + c*s_proj)]])
+        return delta_matrix_isotropic(self.index(omega),
+                                      omega, k_trans)
 
     def rotate_2d(self, angle, inplace=False):
+        if not inplace:
+            return self
+
+    def rotate_3d(self, rotation_matrix, inplace=False):
         if not inplace:
             return self
