@@ -1,5 +1,7 @@
-#!/usr/bin/env python
+from abc import ABC, abstractmethod
 
-from .light import *
-from .coherent import *
-from .incoherent import *
+class Layer(ABC):
+    @abstractmethod
+    def propagation(self, k):
+        return NotImplemented
+
