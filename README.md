@@ -6,7 +6,7 @@
 
 1. Implement computation of transfer matrices.
 2. Write `nix.flake`.
-3. Decide on how to implement in/out subspaces in G.
+3. Decide on how to implement in/out field subspaces (Grassmanians).
 4. Implement reflection, transmission computation.
 5. Meditate on numerical stability, especially with relation to 2.
 6. Write examples and docs.
