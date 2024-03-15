@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "layeroptics"
+version = "0.1.0"
+description = ""
+authors = ["Vladislav Wohlrath <vladislav.wohlrath@second-foundation.eu>"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
