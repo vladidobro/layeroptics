@@ -13,14 +13,6 @@ class Layer(ABC):
     def rotate(self, angle: float) -> "RotatedLayer":
         return RotatedLayer(layer=self, angle=angle)
 
-    def trans_refl(self, k: Wavevector, lsubsp: Subsp, rsubsp: Subsp, from_side: Literal['l', 'r']):
-        transfer = self.transfer(k)
-        match from_side:
-            case 'l': res = compute.transmission_and_reflection_l(transfer, k, lsubsp, rsubsp)
-            case 'r': res = compute.transmission_and_reflection_r(transfer, k, lsubsp, rsubsp)
-            case _: raise ValueError
-        return TransmissionReflectionMatrices(res[0], res[1])
-
 @dataclass 
 class RotatedLayer(Layer):
     layer: Layer
