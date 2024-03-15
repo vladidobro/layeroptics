@@ -5,7 +5,7 @@
 ## Roadmap
 
 1. Implement computation of transfer matrices.
-2. Write `nix.flake`.
+2. Write `flake.nix`.
 3. Decide on how to implement in/out field subspaces (Grassmanians).
 4. Implement reflection, transmission computation.
 5. Meditate on numerical stability, especially with relation to 2.
