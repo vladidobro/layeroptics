@@ -1,21 +1,19 @@
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
-from typing import Any, List, Literal, Tuple
+from typing import List, Tuple
 
 from . import compute
-from .types import Transfer, Delta, Permittivity, Wavevector, TransmissionReflectionMatrices, Subsp
+from .types import Transfer, Delta, Permittivity, Wavevector, Subspace, Magnetization, MOTensor
 
-class Layer(ABC):
-    @abstractmethod
+
+from typing import Protocol
+
+class HasTransferMatrix(Protocol):
     def transfer(self, k: Wavevector) -> Transfer:
-        return NotImplemented
-
-    def rotate(self, angle: float) -> "RotatedLayer":
-        return RotatedLayer(layer=self, angle=angle)
+        ...
 
 @dataclass 
-class RotatedLayer(Layer):
-    layer: Layer
+class RotatedLayer:
+    layer: HasTransferMatrix
     angle: float
 
     def transfer(self, k: Wavevector) -> Transfer:
@@ -24,26 +22,23 @@ class RotatedLayer(Layer):
                 self.angle
         )
 
-    def rotate(self, angle: float) -> "RotatedLayer":
-        return RotatedLayer(layer=self.layer, angle=self.angle + angle)
-
 @dataclass
-class MultiLayer(Layer):
-    layers: List[Layer]
+class MultiLayer:
+    layers: List[HasTransferMatrix]
 
     def transfer(self, k: Wavevector) -> Transfer:
         return compute.transfer_from_multi(k, (l.transfer(k) for l in self.layers))
 
 @dataclass
-class RepeatedLayer(Layer):
-    layer: Layer
+class RepeatedLayer:
+    layer: HasTransferMatrix
     n: int
 
     def transfer(self, k: Wavevector) -> Transfer:
         return compute.transfer_from_repeat(k, self.layer.transfer(k), self.n)
 
 @dataclass
-class BerremanLayer(Layer):
+class BerremanLayer:
     delta: Delta
     thickness: float
 
@@ -51,7 +46,7 @@ class BerremanLayer(Layer):
         return compute.transfer_from_berreman(k, self.delta, self.thickness)
 
 @dataclass
-class IsotropicLayer(Layer):
+class IsotropicLayer:
     index: float
     thickness: float
 
@@ -63,7 +58,7 @@ class IsotropicLayer(Layer):
         )
 
 @dataclass
-class PermittivityLayer(Layer):
+class PermittivityLayer:
     permittivity: Permittivity
     thickness: float
 
@@ -75,7 +70,7 @@ class PermittivityLayer(Layer):
         )
 
 @dataclass
-class ActiveLayer(Layer):
+class ActiveLayer:
     index: float
     activity: float
     thickness: float
@@ -86,3 +81,13 @@ class ActiveLayer(Layer):
                 compute.delta_from_active(self.index, self.activity),
                 self.thickness
         )
+
+@dataclass
+class MagnetoOpticLayer:
+    permittivity: Permittivity
+    magnetization: Magnetization
+    mo_tensors: List[Tuple[int, MOTensor]]
+    thickness: float
+
+    def transfer(self, k: Wavevector) -> Transfer:
+        ...
