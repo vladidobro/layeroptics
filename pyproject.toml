@@ -1,20 +1,7 @@
-[tool.poetry]
+[project]
 name = "layeroptics"
 version = "0.1.0"
-description = ""
-authors = ["Vladislav Wohlrath <vladislav@wohlrath.cz>"]
-license = "GPL-3.0-only"
+description = "Anisotropic thin-layer optics and magneto-optics calculator based on Berreman's 4x4 formalism"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^1.26.4"
-jax = "^0.4.31"
-equinox = "^0.11.5"
-
-[tool.poetry.group.examples.dependencies]
-pandas = "^2"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.11"
+dependencies = []
